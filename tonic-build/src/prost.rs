@@ -24,6 +24,7 @@ pub fn configure() -> Builder {
         extern_path: Vec::new(),
         field_attributes: Vec::new(),
         type_attributes: Vec::new(),
+        boxed: Vec::new(),
         server_attributes: Attributes::default(),
         client_attributes: Attributes::default(),
         proto_path: "super".to_string(),
@@ -225,6 +226,7 @@ pub struct Builder {
     pub(crate) extern_path: Vec<(String, String)>,
     pub(crate) field_attributes: Vec<(String, String)>,
     pub(crate) type_attributes: Vec<(String, String)>,
+    pub(crate) boxed: Vec<String>,
     pub(crate) server_attributes: Attributes,
     pub(crate) client_attributes: Attributes,
     pub(crate) proto_path: String,
@@ -303,6 +305,14 @@ impl Builder {
     pub fn type_attribute<P: AsRef<str>, A: AsRef<str>>(mut self, path: P, attribute: A) -> Self {
         self.type_attributes
             .push((path.as_ref().to_string(), attribute.as_ref().to_string()));
+        self
+    }
+
+    /// Add additional boxed fields.
+    ///
+    /// Passed directly to `prost_build::Config.boxed`.
+    pub fn boxed<P: AsRef<str>>(mut self, path: P) -> Self {
+        self.boxed.push(path.as_ref().to_string());
         self
     }
 
@@ -446,6 +456,9 @@ impl Builder {
         }
         for (prost_path, attr) in self.type_attributes.iter() {
             config.type_attribute(prost_path, attr);
+        }
+        for prost_path in self.boxed.iter() {
+            config.boxed(prost_path);
         }
         if self.compile_well_known_types {
             config.compile_well_known_types();
